@@ -1,0 +1,8 @@
+# Global
+.DS_Store
+# client
+client/node_modules
+# server
+server/node_modules
+# Vite cache
+.vite/
