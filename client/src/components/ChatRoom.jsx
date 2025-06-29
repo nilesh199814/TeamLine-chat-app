@@ -1,53 +1,47 @@
-// ChatRoom.jsx
-import { useEffect, useState, useRef } from 'react';
-import io from 'socket.io-client';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
-
-const SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_SERVER_URL;
+import socket, {SOCKET_SERVER_URL} from '../services/socket'; // ✅ shared socket instance
 
 function ChatRoom({ room }) {
   const [message, setMessage] = useState('');
   const [chat, setChat] = useState([]);
   const [user, setUser] = useState('');
-  const socketRef = useRef(null); // ✅ persist socket
 
   useEffect(() => {
     const randomUser = `User${Math.floor(Math.random() * 1000)}`;
     setUser(randomUser);
 
-    // ✅ Initialize socket only once
-    socketRef.current = io(SOCKET_SERVER_URL, {
-      transports: ['websocket'], // ensure persistent connection
-    });
+    // ✅ Connect and join room
+    if (!socket.connected) {
+      socket.connect();
+    }
 
-    socketRef.current.on('connect', () => {
-      console.log('Connected:', socketRef.current.id);
-    });
+    socket.emit('join_room', room);
 
-    // ✅ Join room
-    socketRef.current.emit('join_room', room);
-
-    // ✅ Load history
+    // ✅ Load message history
     axios.get(`${SOCKET_SERVER_URL}/messages/${room}`).then((res) => {
       setChat(res.data);
     });
 
     // ✅ Listen for incoming messages
-    socketRef.current.on('receive_message', (data) => {
+    const handleMessage = (data) => {
       setChat((prev) => [...prev, data]);
-    });
-
-    // ✅ Clean up on unmount
-    return () => {
-      socketRef.current.disconnect();
-      console.log('Disconnected');
     };
-  }, [room]); // ✅ only re-run when room changes
+
+    socket.on('receive_message', handleMessage);
+
+    // ✅ Cleanup
+    return () => {
+      socket.off('receive_message', handleMessage);
+      socket.disconnect(); // or `socket.leave(room)` if you manage rooms
+      console.log('Socket disconnected');
+    };
+  }, [room]);
 
   const sendMessage = () => {
     if (message.trim()) {
       const newMessage = { user, message, room };
-      socketRef.current.emit('send_message', newMessage);
+      socket.emit('send_message', newMessage);
       setMessage('');
     }
   };

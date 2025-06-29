@@ -32,7 +32,6 @@ app.get('/messages/:room', async (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('socket :>> ', socket);
   console.log(`User connected: ${socket.id}`);
 
   socket.on('join_room', (room) => {
