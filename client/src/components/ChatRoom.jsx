@@ -1,72 +1,78 @@
-import { useEffect, useState } from 'react';
+// client/src/components/ChatRoom.jsx
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
-import socket, {SOCKET_SERVER_URL} from '../services/socket'; // ✅ shared socket instance
+import socket, { SOCKET_SERVER_URL } from '../services/socket';
+import './ChatRoom.css';
 
-function ChatRoom({ room }) {
+function ChatRoom({ room, userId }) {
   const [message, setMessage] = useState('');
   const [chat, setChat] = useState([]);
-  const [user, setUser] = useState('');
+  const chatBoxRef = useRef(null);
 
   useEffect(() => {
-    const randomUser = `User${Math.floor(Math.random() * 1000)}`;
-    setUser(randomUser);
-
-    // ✅ Connect and join room
     if (!socket.connected) {
       socket.connect();
     }
 
     socket.emit('join_room', room);
 
-    // ✅ Load message history
     axios.get(`${SOCKET_SERVER_URL}/messages/${room}`).then((res) => {
       setChat(res.data);
     });
 
-    // ✅ Listen for incoming messages
     const handleMessage = (data) => {
       setChat((prev) => [...prev, data]);
     };
 
     socket.on('receive_message', handleMessage);
 
-    // ✅ Cleanup
     return () => {
       socket.off('receive_message', handleMessage);
-      socket.disconnect(); // or `socket.leave(room)` if you manage rooms
-      console.log('Socket disconnected');
+      socket.disconnect();
     };
-  }, [room]);
+  }, [room, userId]);
+
+  useEffect(() => {
+    // Auto scroll to bottom when new message arrives
+    chatBoxRef.current?.scrollTo(0, chatBoxRef.current.scrollHeight);
+  }, [chat]);
 
   const sendMessage = () => {
     if (message.trim()) {
-      const newMessage = { user, message, room };
+      const newMessage = { user: userId, message, room };
       socket.emit('send_message', newMessage);
       setMessage('');
     }
   };
 
   return (
-    <div>
-      <h2>Room: {room}</h2>
-      <div style={{ height: '300px', overflowY: 'auto', border: '1px solid #ccc', padding: '10px', marginBottom: '10px' }}>
+    <div className="chat-container">
+      <h2 className="chat-heading">Room: {room}</h2>
+
+      <div className="chat-box" ref={chatBoxRef}>
         {chat.map((msg, index) => (
-          <div key={index}>
+          <div
+            key={index}
+            className={`chat-message ${msg.user === userId ? 'own-message' : ''}`}
+          >
             <strong>{msg.user}:</strong> {msg.message}
           </div>
         ))}
       </div>
 
-      <input
-        type="text"
-        placeholder="Message..."
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-      />
-      <button onClick={sendMessage} style={{ marginLeft: '10px' }}>
-        Send
-      </button>
+      <div className="chat-input-row">
+        <input
+          type="text"
+          placeholder="Type your message..."
+          className="chat-input"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+        />
+        <button className="send-button" onClick={sendMessage}>
+          Send
+        </button>
+      </div>
     </div>
   );
 }
