@@ -143,13 +143,3 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-## 🙌 Author
-
-Built with ❤️ by [Your Name](https://github.com/yourusername)
-
-```
-
----
-
-Let me know if your backend uses MongoDB or if you'd like to include deployment instructions (e.g., for Vercel or Heroku).
-```
