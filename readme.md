@@ -55,6 +55,18 @@ server/
 
 ````
 
+---
+
+## 🔧 Setup Instructions
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/yourusername/chat-app.git
+cd chat-app
+````
+
+---
+
 ### 2. Install dependencies
 
 #### Backend
@@ -133,5 +145,11 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## 🙌 Author
 
-Built with ❤️ by Nilesh
+Built with ❤️ by [Your Name](https://github.com/yourusername)
 
+```
+
+---
+
+Let me know if your backend uses MongoDB or if you'd like to include deployment instructions (e.g., for Vercel or Heroku).
+```
